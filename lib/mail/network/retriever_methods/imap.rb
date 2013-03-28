@@ -109,6 +109,19 @@ module Mail
       end
     end
 
+    def flagged(uid, attr, flags)
+      start do |imap|
+        imap.uid_store(uid, attr, flags)
+      end
+    end
+
+    # mail_message is Mail::Message object
+    def move(mailbox, mail_message, flags, datetime)
+      start do |imap|
+        imap.append(mailbox, mail_message, flags, datetime)
+      end
+    end
+
     def list(refname, mailbox)
       start do |imap|
         imap.list(refname, mailbox)
