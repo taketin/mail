@@ -63,7 +63,7 @@ module Mail
       options = validate_options(options)
 
       start do |imap|
-        options[:read_only] ? imap.select(options[:mailbox]) : imap.examine(options[:mailbox])
+        options[:read_only] ? imap.examine(options[:mailbox]) : imap.select(options[:mailbox])
 
         uids = imap.uid_search(options[:keys])
         uids.reverse! if options[:what].to_sym == :last
@@ -109,15 +109,23 @@ module Mail
       end
     end
 
-    def flagged(uid, attr, flags)
+    def flagged(mailbox, uid, attr, flags)
       start do |imap|
+        imap.select(mailbox)
         imap.uid_store(uid, attr, flags)
+      end
+    end
+
+    def destroy!()
+      start do |imap|
+        imap.expunge
       end
     end
 
     # mail_message is Mail::Message object
     def move(mailbox, mail_message, flags, datetime)
       start do |imap|
+        # TODO: old mail stored Deleted Flag
         imap.append(mailbox, mail_message, flags, datetime)
       end
     end
