@@ -71,13 +71,16 @@ module Mail
         uids.reverse! if (options[:what].to_sym == :last && options[:order].to_sym == :asc) ||
                                 (options[:what].to_sym != :last && options[:order].to_sym == :desc)
 
+        fetchattr = options[:flags] ? ['RFC822', 'FLAGS'] : ['RFC822']
         if block_given?
           uids.each do |uid|
             uid = options[:uid].to_i unless options[:uid].nil?
-            fetchdata = imap.uid_fetch(uid, ['RFC822'])[0]
+            fetchdata = imap.uid_fetch(uid, fetchattr)[0]
             new_message = Mail.new(fetchdata.attr['RFC822'])
             new_message.mark_for_delete = true if options[:delete_after_find]
-            if block.arity == 3
+            if options[:flags] && block.arity == 4
+              yield new_message, imap, uid, fetchdata.attr['FLAGS']
+            elsif block.arity == 3
               yield new_message, imap, uid
             else
               yield new_message
@@ -90,7 +93,7 @@ module Mail
           emails = []
           uids.each do |uid|
             uid = options[:uid].to_i unless options[:uid].nil?
-            fetchdata = imap.uid_fetch(uid, ['RFC822'])[0]
+            fetchdata = imap.uid_fetch(uid, fetchattr)[0]
             emails << Mail.new(fetchdata.attr['RFC822'])
             imap.uid_store(uid, "+FLAGS", [Net::IMAP::DELETED]) if options[:delete_after_find]
             break unless options[:uid].nil?
@@ -175,6 +178,7 @@ module Mail
         options[:what]    ||= :first
         options[:keys]    ||= 'ALL'
         options[:uid]     ||= nil
+        options[:flags]   ||= true
         options[:delete_after_find] ||= false
         options[:mailbox] = Net::IMAP.encode_utf7(options[:mailbox])
         options[:read_only] ||= false
