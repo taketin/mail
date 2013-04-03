@@ -112,39 +112,6 @@ module Mail
       end
     end
 
-    def flagged(mailbox, uid, attr, flags)
-      start do |imap|
-        imap.select(mailbox)
-        imap.uid_store(uid, attr, flags)
-      end
-    end
-
-    def destroy!()
-      start do |imap|
-        imap.expunge
-      end
-    end
-
-    # mail_message is Mail::Message object
-    def move(mailbox, mail_message, flags, datetime)
-      start do |imap|
-        # TODO: old mail stored Deleted Flag
-        imap.append(mailbox, mail_message, flags, datetime)
-      end
-    end
-
-    def list(refname, mailbox)
-      start do |imap|
-        imap.list(refname, mailbox)
-      end
-    end
-
-    def create_mailbox(mailbox)
-      start do |imap|
-        imap.create(mailbox)
-      end
-    end
-
     # Delete all emails from a IMAP mailbox
     def delete_all(mailbox='INBOX')
       mailbox ||= 'INBOX'
