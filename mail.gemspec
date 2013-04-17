@@ -3,7 +3,7 @@ $:.unshift lib_dir unless $:.include? lib_dir
 require 'mail/version'
 
 Gem::Specification.new do |s|
-  s.name        = "taketin-mail"
+  s.name        = "mail"
   s.version     = Mail::VERSION::STRING
   s.author      = "taketin"
   s.email       = "tksthdnr@gmail.com"
