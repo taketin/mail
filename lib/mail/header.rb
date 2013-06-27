@@ -21,20 +21,6 @@ module Mail
     include Utilities
     include Enumerable
     
-    @@maximum_amount = 1000
-
-    # Large amount of headers in Email might create extra high CPU load
-    # Use this parameter to limit number of headers that will be parsed by 
-    # mail library.
-    # Default: 1000
-    def self.maximum_amount
-      @@maximum_amount
-    end
-
-    def self.maximum_amount=(value)
-      @@maximum_amount = value
-    end
-
     # Creates a new header object.
     # 
     # Accepts raw text or nothing.  If given raw text will attempt to parse
@@ -87,12 +73,14 @@ module Mail
     #  h.fields = ['From: mikel@me.com', 'To: bob@you.com']
     def fields=(unfolded_fields)
       @fields = Mail::FieldList.new
-      warn "Warning: more than #{self.class.maximum_amount} header fields only using the first #{self.class.maximum_amount}" if unfolded_fields.length > self.class.maximum_amount
-      unfolded_fields[0..(self.class.maximum_amount-1)].each do |field|
+      warn "Warning: more than 1000 header fields only using the first 1000" if unfolded_fields.length > 1000
+      unfolded_fields[0..1000].each do |field|
 
         field = Field.new(field, nil, charset)
         field.errors.each { |error| self.errors << error }
-        if limited_field?(field.name) && (selected = select_field_for(field.name)) && selected.any? 
+        selected = select_field_for(field.name)
+
+        if selected.any? && limited_field?(field.name)
           selected.first.update(field.name, field.value)
         else
           @fields << field
@@ -171,15 +159,15 @@ module Mail
         # Need to insert in correct order for trace fields
         self.fields << Field.new(name.to_s, value, charset)
       end
-      if dasherize(fn) == "content-type"
-        # Update charset if specified in Content-Type
-        params = self[:content_type].parameters rescue nil
-        @charset = params && params[:charset]
-      end
     end
     
     def charset
-      @charset
+      params = self[:content_type].parameters rescue nil
+      if params
+        params[:charset]
+      else
+        @charset
+      end
     end
     
     def charset=(val)
@@ -266,19 +254,12 @@ module Mail
     end
     
     def select_field_for(name)
-      fields.select { |f| f.responsible_for?(name) }
+      fields.select { |f| f.responsible_for?(name.to_s) }
     end
     
     def limited_field?(name)
       LIMITED_FIELDS.include?(name.to_s.downcase)
     end
-
-    # Enumerable support; yield each field in order to the block if there is one,
-    # or return an Enumerator for them if there isn't.
-    def each( &block )
-      return self.fields.each( &block ) if block
-      self.fields.each
-    end
-
+    
   end
 end

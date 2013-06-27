@@ -19,6 +19,8 @@ rescue Bundler::GemNotFound
     "Did you run `bundle install`?"
 end
 
+require File.expand_path('../spec/environment', __FILE__)
+
 require 'rake/testtask'
 require 'rspec/core/rake_task'
 
